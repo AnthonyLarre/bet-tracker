@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetTracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .header-balance {
+            text-align: right;
+        }
+
+        .header-balance .label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        .header-balance .amount {
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .header-actions { display: flex; gap: 6px; align-items: center; }
+
+        .btn-header {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+        .btn-header:hover { background: rgba(255,255,255,0.2); }
+
+        .positive {
+            color: #4ade80;
+        }
+
+        .negative {
+            color: #f87171;
+        }
+
+        .neutral {
+            color: #94a3b8;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* Tabs */
+        .tabs-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .tabs-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            flex-shrink: 0;
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            transition: all 0.18s;
+            white-space: nowrap;
+            color: #64748b;
+        }
+
+        .tab:hover {
+            border-color: #1a1a2e;
+            color: #1a1a2e;
+        }
+
+        .tab.active {
+            background: #1a1a2e;
+            color: white;
+            border-color: #1a1a2e;
+        }
+
+        .tab-add {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px dashed #94a3b8;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.3rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s;
+        }
+
+        .tab-add:hover {
+            border-color: #1a1a2e;
+            color: #1a1a2e;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 14px;
+        }
+
+        /* Add bet button */
+        .form-toggle {
+            width: 100%;
+            padding: 13px;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            margin-top: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: opacity 0.15s;
+        }
+
+        .form-toggle:hover {
+            opacity: 0.88;
+        }
+
+        .form-toggle.open {
+            background: #475569;
+        }
+
+        /* Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        input,
+        select {
+            padding: 10px 12px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            font-size: 0.93rem;
+            outline: none;
+            transition: border-color 0.18s;
+            background: white;
+            color: #1a1a2e;
+            width: 100%;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #1a1a2e;
+        }
+
+        .btn-submit {
+            grid-column: 1 / -1;
+            padding: 12px;
+            background: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.88;
+        }
+
+        /* Summary */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .summary-label {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* Bet list */
+        .bet-item {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 13px 0;
+        }
+
+        .bet-item:first-child {
+            padding-top: 0;
+        }
+
+        .bet-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .bet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 3px;
+        }
+
+        .bet-event {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .bet-desc {
+            font-size: 0.85rem;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .bet-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-bottom: 9px;
+        }
+
+        .bet-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-won,
+        .btn-lost {
+            flex: 1;
+            padding: 8px 6px;
+            border-radius: 7px;
+            font-size: 0.83rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-won {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1.5px solid #16a34a;
+        }
+
+        .btn-won:hover,
+        .btn-won.active {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-lost {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #dc2626;
+        }
+
+        .btn-lost:hover,
+        .btn-lost.active {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-cancelled {
+            padding: 8px 10px;
+            background: #f8fafc;
+            color: #64748b;
+            border: 1.5px solid #94a3b8;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-cancelled:hover,
+        .btn-cancelled.active {
+            background: #64748b;
+            color: white;
+            border-color: #64748b;
+        }
+
+        .btn-delete {
+            padding: 8px 10px;
+            background: #f8fafc;
+            color: #94a3b8;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            transition: all 0.15s;
+        }
+
+        .btn-delete:hover {
+            border-color: #dc2626;
+            color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .result-badge {
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+            flex-shrink: 0;
+        }
+
+        .result-badge.won {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .result-badge.lost {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .result-badge.cancelled {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .pending-badge {
+            font-size: 0.75rem;
+            color: #f59e0b;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Event groups */
+        .event-group {
+            background: #f8fafc;
+            border: 2.5px solid #1a1a2e;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .event-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .event-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #1a1a2e;
+            margin-bottom: 0;
+        }
+
+        .event-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .event-group .bet-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .event-group .bet-item:last-child {
+            border-bottom: none;
+        }
+
+        .standalone-bet {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .standalone-bet:last-child {
+            margin-bottom: 0;
+        }
+
+        .standalone-bet .bet-item {
+            padding: 12px 14px;
+            border-bottom: none;
+        }
+
+        .btn-event-add {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: transparent;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+
+        .btn-event-add:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: white;
+        }
+
+        /* Global summary */
+        .global-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+
+        .global-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .global-total {
+            font-weight: 700;
+            border-top: 2px solid #e2e8f0 !important;
+            margin-top: 4px;
+            padding-top: 12px !important;
+        }
+
+        /* Empty */
+        .empty {
+            text-align: center;
+            padding: 28px 16px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .empty-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal h3 {
+            margin-bottom: 16px;
+            font-size: 1.05rem;
+        }
+
+        .modal input {
+            margin-bottom: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 11px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 11px;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Bookmakers bar */
+        .bm-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .bm-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .bm-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+        }
+
+        .bm-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px 5px 8px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: default;
+            flex-shrink: 0;
+            border: 2px solid transparent;
+        }
+
+        .bm-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .bm-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: inherit;
+            opacity: 0.5;
+            padding: 0 0 0 4px;
+            line-height: 1;
+        }
+
+        .bm-delete:hover {
+            opacity: 1;
+        }
+
+        .bm-add {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px dashed #94a3b8;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s;
+        }
+
+        .bm-add:hover {
+            border-color: #1a1a2e;
+            color: #1a1a2e;
+        }
+
+        /* Emoji picker */
+        .emoji-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .emoji-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background: #f1f5f9;
+            cursor: pointer;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.12s;
+        }
+
+        .emoji-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .emoji-btn.selected {
+            border-color: #1a1a2e;
+            background: #dbeafe;
+        }
+
+        /* Color picker in modal */
+        .color-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .color-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: transform 0.12s;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.15);
+        }
+
+        .color-swatch.selected {
+            border-color: #1a1a2e;
+        }
+
+        @media (max-width: 480px) {
+            .summary-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 4px;
+            }
+
+            .summary-value {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>BetTracker</h1>
+        <div class="header-actions">
+            <button class="btn-header" onclick="exportData()" title="Sauvegarder les données">💾 Export</button>
+            <button class="btn-header" onclick="importData()" title="Restaurer une sauvegarde">📂 Import</button>
+            <button class="btn-header" onclick="resetData()" title="Réinitialiser toutes les données" style="border-color:rgba(248,113,113,0.5);color:#fca5a5;">🗑 Reset</button>
+            <div class="header-balance">
+                <div class="label">Bilan global</div>
+                <div class="amount neutral" id="globalAmount">0,00 €</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs-wrapper" id="tabsWrapper"></div>
+        <div class="bm-bar" id="bmBar"></div>
+        <div id="contentArea"></div>
+    </div>
+
+    <!-- Modal nouvelle catégorie -->
+    <div class="modal-overlay hidden" id="modalCat">
+        <div class="modal">
+            <h3>Nouvelle catégorie</h3>
+            <input type="text" id="catInput" placeholder="Ex: Golf, Cyclisme, Foot…" maxlength="30">
+            <label style="font-size:0.78rem;font-weight:700;color:#64748b;display:block;margin-bottom:8px">Emoji</label>
+            <div class="emoji-grid" id="catEmojiGrid"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+                <button class="btn-confirm" onclick="addCategory()">Créer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal nouveau bookmaker -->
+    <div class="modal-overlay hidden" id="modalBm">
+        <div class="modal">
+            <h3>Nouveau bookmaker</h3>
+            <input type="text" id="bmInput" placeholder="Ex: Winamax, Betclic…" maxlength="30">
+            <div class="color-row" id="bmColors"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeBmModal()">Annuler</button>
+                <button class="btn-confirm" onclick="addBookmaker()">Créer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── Storage ──────────────────────────────────────────────────────────────────
+
+        let data = JSON.parse(localStorage.getItem('ps-data') || '{"categories":[],"bets":[],"bookmakers":[]}');
+        if (!data.bookmakers) data.bookmakers = [];
+        if (data.categories.length > 0 && typeof data.categories[0] === 'string') {
+            data.categories = data.categories.map(name => ({ name, emoji: '' }));
+        }
+
+        const CAT_EMOJIS = [
+            '⚽','🎾','🏀','🚗','🏸','⚾','🎿','🥊','🚴','🏈',
+            '🏎️','⛳','🤾','🏒','🥋','🏍️','🏉','⛷️','🎱','🏐',
+            '🎯','🏊','🏇','🏄','🤸','🏹','🏃','🤼','🧗','🎳',
+            '🤺','🤽','🏋️','🥅','🏓','🤿','🎣','🧘','🏆','🚀'
+        ];
+        let selectedCatEmoji = '';
+        let activeCategory = data.categories.length > 0 ? data.categories[0].name : null;
+        let formOpen = false;
+        let prefillEvent = '';
+        let bilansTab = 'cat';
+        let bilansBm = null;
+
+        function save() {
+            localStorage.setItem('ps-data', JSON.stringify(data));
+        }
+
+        const BM_COLORS = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#1abc9c', '#3498db', '#9b59b6', '#e91e63', '#ff5722', '#607d8b'];
+        let selectedBmColor = BM_COLORS[0];
+
+        // ── Bookmakers ────────────────────────────────────────────────────────────────
+
+        function openBmModal() {
+            document.getElementById('modalBm').classList.remove('hidden');
+            document.getElementById('bmInput').value = '';
+            selectedBmColor = BM_COLORS[0];
+            renderBmColorPicker();
+            setTimeout(() => document.getElementById('bmInput').focus(), 80);
+        }
+
+        function closeBmModal() {
+            document.getElementById('modalBm').classList.add('hidden');
+        }
+
+        function renderBmColorPicker() {
+            document.getElementById('bmColors').innerHTML = BM_COLORS.map(c =>
+                `<div class="color-swatch${c === selectedBmColor ? ' selected' : ''}"
+              style="background:${c}"
+              onclick="selectBmColor('${c}')"></div>`
+            ).join('');
+        }
+
+        function selectBmColor(color) {
+            selectedBmColor = color;
+            renderBmColorPicker();
+        }
+
+        function addBookmaker() {
+            const name = document.getElementById('bmInput').value.trim();
+            if (!name) return;
+            if (data.bookmakers.find(b => b.name === name)) { alert('Ce bookmaker existe déjà.'); return; }
+            data.bookmakers.push({ id: Date.now(), name, color: selectedBmColor });
+            save();
+            closeBmModal();
+            renderBookmakers();
+        }
+
+        function deleteBookmaker(id) {
+            if (!confirm('Supprimer ce bookmaker ?')) return;
+            data.bookmakers = data.bookmakers.filter(b => b.id !== id);
+            save();
+            renderBookmakers();
+        }
+
+        function renderBookmakers() {
+            const bar = document.getElementById('bmBar');
+            if (data.bookmakers.length === 0) {
+                bar.innerHTML = `<span class="bm-label">Bookmakers</span>
+            <button class="bm-add" onclick="openBmModal()" title="Ajouter un bookmaker">+</button>`;
+                return;
+            }
+            bar.innerHTML = `<span class="bm-label">Bookmakers</span>` +
+                data.bookmakers.map(bm => {
+                    const light = bm.color + '22';
+                    return `<div class="bm-pill" style="background:${light};color:${bm.color};border-color:${bm.color}">
+                <div class="bm-dot" style="background:${bm.color}"></div>
+                ${escHtml(bm.name)}
+                <button class="bm-delete" onclick="deleteBookmaker(${bm.id})" title="Supprimer">✕</button>
+            </div>`;
+                }).join('') +
+                `<button class="bm-add" onclick="openBmModal()" title="Ajouter un bookmaker">+</button>`;
+        }
+
+        // ── Categories ───────────────────────────────────────────────────────────────
+
+        function openModal() {
+            selectedCatEmoji = '';
+            document.getElementById('modalCat').classList.remove('hidden');
+            document.getElementById('catInput').value = '';
+            renderCatEmojiGrid();
+            setTimeout(() => document.getElementById('catInput').focus(), 80);
+        }
+
+        function renderCatEmojiGrid() {
+            document.getElementById('catEmojiGrid').innerHTML = CAT_EMOJIS.map(e =>
+                `<button type="button" class="emoji-btn${e === selectedCatEmoji ? ' selected' : ''}" onclick="selectCatEmoji('${e}')">${e}</button>`
+            ).join('');
+        }
+
+        function selectCatEmoji(e) {
+            selectedCatEmoji = (selectedCatEmoji === e) ? '' : e;
+            renderCatEmojiGrid();
+        }
+
+        function closeModal() {
+            document.getElementById('modalCat').classList.add('hidden');
+        }
+
+        function addCategory() {
+            const name = document.getElementById('catInput').value.trim();
+            if (!name) return;
+            if (data.categories.find(c => c.name === name)) { alert('Cette catégorie existe déjà.'); return; }
+            data.categories.push({ name, emoji: selectedCatEmoji });
+            save();
+            closeModal();
+            activeCategory = name;
+            formOpen = false;
+            render();
+        }
+
+        function catLabel(cat) {
+            return cat.emoji ? `${cat.emoji} ${cat.name}` : cat.name;
+        }
+
+        // ── Bets ─────────────────────────────────────────────────────────────────────
+
+        function openFormWithEvent(name) {
+            prefillEvent = name;
+            formOpen = true;
+            render();
+            setTimeout(() => {
+                const el = document.getElementById('bDesc');
+                if (el) el.focus();
+            }, 50);
+        }
+
+        function submitBet() {
+            const event = document.getElementById('bEvent').value.trim();
+            const desc = document.getElementById('bDesc').value.trim();
+            const odds = parseFloat(document.getElementById('bOdds').value);
+            const stake = parseFloat(document.getElementById('bStake').value);
+
+            const bmSelect = document.getElementById('bBookmaker');
+            const bookmarkerId = bmSelect ? parseInt(bmSelect.value) || null : null;
+
+            if (!desc || isNaN(odds) || isNaN(stake) || odds < 1 || stake <= 0) {
+                alert('Merci de remplir tous les champs correctement.');
+                return;
+            }
+
+            if (data.bookmakers.length > 0 && !bookmarkerId) {
+                alert('Merci de sélectionner un bookmaker.');
+                return;
+            }
+
+            data.bets.push({
+                id: Date.now(),
+                category: activeCategory,
+                event, desc, odds, stake,
+                bookmarkerId,
+                result: null,
+                date: new Date().toLocaleDateString('fr-FR')
+            });
+
+            save();
+            formOpen = false;
+            prefillEvent = '';
+            render();
+        }
+
+        function setResult(id, result) {
+            const bet = data.bets.find(b => b.id === id);
+            if (!bet) return;
+            if (bet.result !== null && bet.result !== result) {
+                const labels = { won: 'Gagné', lost: 'Perdu', cancelled: 'Annulé' };
+                if (!confirm(`Ce pari est déjà marqué "${labels[bet.result]}". Confirmer le changement en "${labels[result]}" ?`)) return;
+            }
+            bet.result = (bet.result === result) ? null : result;
+            save();
+            render();
+        }
+
+        function deleteBet(id) {
+            if (!confirm('Supprimer ce pari ?')) return;
+            data.bets = data.bets.filter(b => b.id !== id);
+            save();
+            render();
+        }
+
+        // ── Calculations ─────────────────────────────────────────────────────────────
+
+        function profit(bet) {
+            if (bet.result === 'won') return +(bet.stake * bet.odds - bet.stake).toFixed(2);
+            if (bet.result === 'lost') return -bet.stake;
+            if (bet.result === 'cancelled') return 0;
+            return null;
+        }
+
+        function catStats(cat, bmId = null) {
+            const bets    = data.bets.filter(b => b.category === cat && (bmId === null || b.bookmarkerId === bmId));
+            const settled = bets.filter(b => b.result !== null);
+            const won     = settled.filter(b => b.result === 'won').length;
+            const total   = settled.reduce((s, b) => s + profit(b), 0);
+            return { count: bets.length, settled: settled.length, won, total };
+        }
+
+        function globalTotal() {
+            return data.bets.filter(b => b.result !== null).reduce((s, b) => s + profit(b), 0);
+        }
+
+        function fmt(n, sign = true) {
+            if (n === null) return '—';
+            const abs = Math.abs(n).toFixed(2).replace('.', ',');
+            if (!sign) return abs + ' €';
+            return (n >= 0 ? '+' : '−') + abs + ' €';
+        }
+
+        function cls(n) {
+            if (n === null || n === 0) return 'neutral';
+            return n > 0 ? 'positive' : 'negative';
+        }
+
+        // ── Render ───────────────────────────────────────────────────────────────────
+
+        function render() {
+            renderHeader();
+            renderTabs();
+            renderBookmakers();
+            renderContent();
+        }
+
+        function renderHeader() {
+            const g = globalTotal();
+            const el = document.getElementById('globalAmount');
+            el.textContent = fmt(g, false);
+            el.className = 'amount ' + cls(g);
+        }
+
+        function renderTabs() {
+            const wrapper = document.getElementById('tabsWrapper');
+            wrapper.innerHTML = '';
+
+            data.categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'tab' + (cat.name === activeCategory ? ' active' : '');
+                btn.textContent = catLabel(cat);
+                btn.onclick = () => { activeCategory = cat.name; formOpen = false; render(); };
+                wrapper.appendChild(btn);
+            });
+
+            const add = document.createElement('button');
+            add.className = 'tab-add';
+            add.textContent = '+';
+            add.title = 'Ajouter une catégorie';
+            add.onclick = openModal;
+            wrapper.appendChild(add);
+        }
+
+        function renderContent() {
+            const area = document.getElementById('contentArea');
+
+            if (data.categories.length === 0) {
+                area.innerHTML = `<div class="empty">
+            <div class="empty-icon">📂</div>
+            <div style="margin-bottom:20px;font-size:1rem;color:#475569;font-weight:500;">Crée ta première catégorie pour commencer</div>
+            <button onclick="openModal()" style="padding:14px 32px;background:#1a1a2e;color:white;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;">
+                + Créer une catégorie
+            </button>
+        </div>`;
+                return;
+            }
+
+            if (!activeCategory || !data.categories.find(c => c.name === activeCategory)) {
+                activeCategory = data.categories[0].name;
+            }
+
+            const bets = [...data.bets].filter(b => b.category === activeCategory).reverse();
+            const stats = catStats(activeCategory);
+            let html = '';
+
+            // Bilan bloc unifié
+            if (data.categories.length > 1 || data.bookmakers.length > 0) {
+                const showCatTab   = data.categories.length > 1;
+                const showBmTab    = data.bookmakers.length > 0;
+                const filteredBets = b => b.result !== null && (bilansBm === null || b.bookmarkerId === bilansBm);
+                const bilanTotal   = data.bets.filter(filteredBets).reduce((s, b) => s + profit(b), 0);
+
+                html += `<div class="card" style="padding:0;overflow:hidden">
+                    <div style="background:#1a1a2e;color:white;text-align:center;padding:10px;font-size:0.9rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase">Bilan</div>
+                    <div style="padding:16px">`;
+
+                if (showBmTab) {
+                    html += `<div style="margin-bottom:12px">
+                        <div style="font-size:0.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px">Bookmaker</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px">
+                            <button onclick="bilansBm=null;render()" style="padding:5px 12px;border-radius:20px;border:2px solid ${bilansBm===null?'#1a1a2e':'#e2e8f0'};background:${bilansBm===null?'#1a1a2e':'white'};color:${bilansBm===null?'white':'#64748b'};font-size:0.8rem;font-weight:700;cursor:pointer">Tous</button>
+                            ${data.bookmakers.map(bm => `
+                            <button onclick="bilansBm=${bm.id};render()" style="padding:5px 12px;border-radius:20px;border:2px solid ${bilansBm===bm.id?bm.color:'#e2e8f0'};background:${bilansBm===bm.id?bm.color+'22':'white'};color:${bilansBm===bm.id?bm.color:'#64748b'};font-size:0.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+                                <span style="width:8px;height:8px;border-radius:50%;background:${bm.color};display:inline-block"></span>${escHtml(bm.name)}
+                            </button>`).join('')}
+                        </div>
+                    </div>`;
+                }
+
+                if (showCatTab) {
+                    data.categories.forEach(cat => {
+                        const s = catStats(cat.name, bilansBm);
+                        html += `<div class="global-row">
+                            <span>${escHtml(catLabel(cat))}</span>
+                            <span class="${cls(s.total)}">${s.settled > 0 ? fmt(s.total) : '—'}</span>
+                        </div>`;
+                    });
+                }
+                html += `<div class="global-row global-total">
+                    <span>Total</span>
+                    <span class="${cls(bilanTotal)}">${fmt(bilanTotal)}</span>
+                </div>`;
+
+                html += `</div></div>`;
+            }
+
+            // Toggle form
+            const activeCatObj = data.categories.find(c => c.name === activeCategory);
+            const activeCatLabel = activeCatObj ? catLabel(activeCatObj) : activeCategory;
+            html += `<button class="form-toggle${formOpen ? ' open' : ''}" onclick="toggleForm()">
+        ${formOpen ? '✕ Fermer' : `+ Ajouter un pari ${activeCatLabel}`}
+    </button>`;
+
+            // Form
+            if (formOpen) {
+                html += `<div class="card">
+            <div class="card-title">Nouveau pari · ${activeCategory}</div>
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Événement <span style="font-weight:400;color:#94a3b8;font-size:0.75rem">(optionnel)</span></label>
+                    <input type="text" id="bEvent" placeholder="Ex: Masters de Madrid" value="${escHtml(prefillEvent)}">
+                </div>
+                <div class="form-group full">
+                    <label>Pari pris</label>
+                    <input type="text" id="bDesc" placeholder="Ex: Nadal gagne">
+                </div>
+                <div class="form-group">
+                    <label>Cote</label>
+                    <input type="number" id="bOdds" placeholder="2.00" step="0.01" min="1" value="2">
+                </div>
+                <div class="form-group">
+                    <label>Mise (€)</label>
+                    <input type="number" id="bStake" placeholder="10" step="0.50" min="0.01" value="10">
+                </div>
+                <div class="form-group full">
+                    <label>Bookmaker</label>
+                    ${data.bookmakers.length === 0
+                        ? `<div style="font-size:0.82rem;color:#94a3b8;padding:8px 0">Aucun bookmaker créé — <span style="cursor:pointer;color:#3498db;text-decoration:underline" onclick="openBmModal()">en créer un</span></div>`
+                        : `<select id="bBookmaker">
+                            <option value="">— Aucun —</option>
+                            ${data.bookmakers.map(bm => `<option value="${bm.id}">${bm.name}</option>`).join('')}
+                           </select>`
+                    }
+                </div>
+                <button class="btn-submit" onclick="submitBet()">Enregistrer</button>
+            </div>
+        </div>`;
+            }
+
+            // Category summary
+            if (stats.settled > 0) {
+                const winRate = Math.round(stats.won / stats.settled * 100);
+                html += `<div class="card">
+            <div class="card-title">Bilan · ${activeCategory}</div>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value ${cls(stats.total)}">${fmt(stats.total)}</div>
+                    <div class="summary-label">Bénéf / Perte</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${winRate}%</div>
+                    <div class="summary-label">Taux victoire</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">${stats.count}</div>
+                    <div class="summary-label">Paris</div>
+                    <div style="font-size:0.7rem;color:#f59e0b;font-weight:600;margin-top:2px;visibility:${stats.count - stats.settled > 0 ? 'visible' : 'hidden'}">${stats.count - stats.settled} en attente</div>
+                </div>
+            </div>
+        </div>`;
+            }
+
+            // Bets list
+            html += `<div class="card" style="margin-top:16px"><div class="card-title">Paris · ${activeCategory}</div>`;
+
+            if (bets.length === 0) {
+                html += `<div class="empty" style="padding:20px 0">Aucun pari dans cette catégorie</div>`;
+            } else {
+                // Grouper les paris avec événement, laisser les autres en solo
+                const groups = {};
+                bets.filter(b => b.event).forEach(bet => {
+                    if (!groups[bet.event]) groups[bet.event] = [];
+                    groups[bet.event].push(bet);
+                });
+
+                const items = [];
+                Object.entries(groups).forEach(([eventName, eventBets]) => {
+                    items.push({ type: 'group', eventName, bets: eventBets, latestId: Math.max(...eventBets.map(b => b.id)) });
+                });
+                bets.filter(b => !b.event).forEach(bet => {
+                    items.push({ type: 'single', bet, latestId: bet.id });
+                });
+                items.sort((a, b) => b.latestId - a.latestId);
+
+                items.forEach(item => {
+                    if (item.type === 'group') {
+                        const safeEvent  = encodeURIComponent(item.eventName);
+                        const settled    = item.bets.filter(b => b.result !== null);
+                        const eventTotal = settled.reduce((s, b) => s + profit(b), 0);
+                        const hasSettled = settled.length > 0;
+                        html += `<div class="event-group">
+                            <div class="event-group-header">
+                                <div class="event-name">${escHtml(item.eventName)}</div>
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    ${hasSettled ? `<span style="font-size:0.85rem;font-weight:700;color:${eventTotal > 0 ? '#4ade80' : eventTotal < 0 ? '#f87171' : '#94a3b8'}">${fmt(eventTotal)}</span>` : ''}
+                                    <button class="btn-event-add" onclick="openFormWithEvent(decodeURIComponent('${safeEvent}'))" title="Ajouter un pari sur cet événement">+</button>
+                                </div>
+                            </div>`;
+                        item.bets.forEach(bet => { html += betCardHtml(bet); });
+                        html += `</div>`;
+                    } else {
+                        html += `<div class="standalone-bet">${betCardHtml(item.bet)}</div>`;
+                    }
+                });
+            }
+
+            html += `</div>`;
+
+
+            area.innerHTML = html;
+        }
+
+        function betCardHtml(bet) {
+            const p  = profit(bet);
+            const bm = data.bookmakers.find(b => b.id === bet.bookmarkerId);
+            return `<div class="bet-item">
+                <div class="bet-header">
+                    <div class="bet-desc">${escHtml(bet.desc)}</div>
+                    ${bet.result === 'cancelled'
+                        ? `<span class="result-badge cancelled">Annulé — remboursé</span>`
+                        : p !== null
+                            ? `<span class="result-badge ${bet.result}">${fmt(p)}</span>`
+                            : `<span class="pending-badge">⏳ En attente</span>`}
+                </div>
+                <div class="bet-meta">
+                    <span>Cote : ${bet.odds}</span>
+                    <span>Mise : ${bet.stake} €</span>
+                    <span>${bet.date}</span>
+                    ${bm ? `<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${bm.color};display:inline-block"></span>${escHtml(bm.name)}</span>` : ''}
+                </div>
+                <div class="bet-actions">
+                    <button class="btn-won${bet.result === 'won' ? ' active' : ''}" onclick="setResult(${bet.id},'won')">✓ Gagné</button>
+                    <button class="btn-lost${bet.result === 'lost' ? ' active' : ''}" onclick="setResult(${bet.id},'lost')">✗ Perdu</button>
+                    <button class="btn-cancelled${bet.result === 'cancelled' ? ' active' : ''}" onclick="setResult(${bet.id},'cancelled')">Annulé</button>
+                    <button class="btn-delete" onclick="deleteBet(${bet.id})" title="Supprimer">🗑</button>
+                </div>
+            </div>`;
+        }
+
+        function toggleForm() {
+            formOpen = !formOpen;
+            if (!formOpen) prefillEvent = '';
+            render();
+        }
+
+        // ── Export / Import ───────────────────────────────────────────────────────
+
+        function resetData() {
+            if (!confirm('Réinitialiser toutes les données ?\n\nCette action est irréversible — toutes les catégories, bookmakers et paris seront supprimés.')) return;
+            if (!confirm('Dernière confirmation : toutes les données seront effacées définitivement.')) return;
+            localStorage.removeItem('ps-data');
+            data = { categories: [], bets: [], bookmakers: [] };
+            activeCategory = null;
+            formOpen = false;
+            prefillEvent = '';
+            bilansTab = 'cat';
+            render();
+        }
+
+        function exportData() {
+            const date = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `paris-sportifs-${date}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            const input    = document.createElement('input');
+            input.type     = 'file';
+            input.accept   = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const imported = JSON.parse(ev.target.result);
+                        if (!Array.isArray(imported.bets) || !Array.isArray(imported.categories)) {
+                            alert('Fichier invalide — structure non reconnue.');
+                            return;
+                        }
+                        if (!confirm(`Remplacer toutes les données actuelles par ce fichier ?\n(${imported.bets.length} paris, ${imported.categories.length} catégories)`)) return;
+                        data = imported;
+                        if (!data.bookmakers) data.bookmakers = [];
+                        if (data.categories.length > 0 && typeof data.categories[0] === 'string') {
+                            data.categories = data.categories.map(name => ({ name, emoji: '' }));
+                        }
+                        activeCategory = null;
+                        save();
+                        render();
+                    } catch {
+                        alert('Erreur de lecture du fichier.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function escHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Modal keyboard
+        document.getElementById('catInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') addCategory();
+            if (e.key === 'Escape') closeModal();
+        });
+
+        document.getElementById('modalCat').addEventListener('click', e => {
+            if (e.target === document.getElementById('modalCat')) closeModal();
+        });
+
+        document.getElementById('bmInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') addBookmaker();
+            if (e.key === 'Escape') closeBmModal();
+        });
+
+        document.getElementById('modalBm').addEventListener('click', e => {
+            if (e.target === document.getElementById('modalBm')) closeBmModal();
+        });
+
+        render();
+    </script>
+</body>
+
+</html>
