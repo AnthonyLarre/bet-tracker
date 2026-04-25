@@ -962,7 +962,7 @@
                 event, desc, odds, stake,
                 bookmarkerId,
                 result: null,
-                date: new Date().toLocaleDateString('fr-FR')
+                date: (() => { const d = document.getElementById('bDate').value; return d ? new Date(d + 'T12:00:00').toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR'); })()
             });
 
             save();
@@ -1160,6 +1160,10 @@
                            </select>`
                     }
                 </div>
+                <div class="form-group full">
+                    <label>Date du pari <span style="font-weight:400;color:#94a3b8;font-size:0.75rem">(aujourd'hui par défaut)</span></label>
+                    <input type="date" id="bDate" value="${new Date().toISOString().split('T')[0]}" max="${new Date().toISOString().split('T')[0]}">
+                </div>
                 <button class="btn-submit" onclick="submitBet()">Enregistrer</button>
             </div>
         </div>`;
@@ -1203,12 +1207,14 @@
 
                 const items = [];
                 Object.entries(groups).forEach(([eventName, eventBets]) => {
-                    items.push({ type: 'group', eventName, bets: eventBets, latestId: Math.max(...eventBets.map(b => b.id)) });
+                    const sorted = [...eventBets].sort((a, b) => parseFrDate(b.date) - parseFrDate(a.date));
+                    const latestDate = Math.max(...eventBets.map(b => parseFrDate(b.date)));
+                    items.push({ type: 'group', eventName, bets: sorted, latestDate });
                 });
                 bets.filter(b => !b.event).forEach(bet => {
-                    items.push({ type: 'single', bet, latestId: bet.id });
+                    items.push({ type: 'single', bet, latestDate: parseFrDate(bet.date) });
                 });
-                items.sort((a, b) => b.latestId - a.latestId);
+                items.sort((a, b) => b.latestDate - a.latestDate);
 
                 items.forEach(item => {
                     if (item.type === 'group') {
@@ -1236,6 +1242,11 @@
 
 
             area.innerHTML = html;
+        }
+
+        function parseFrDate(str) {
+            const [d, m, y] = str.split('/');
+            return new Date(y, m - 1, d).getTime();
         }
 
         function betCardHtml(bet) {
